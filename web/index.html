@@ -135,6 +135,9 @@
   50%  { transform:scale(1.18); opacity:.6 }
   100% { transform:scale(.95); opacity:.95 }
 }
+@media (prefers-reduced-motion: reduce){
+  .odsc-mr__pulse{ animation:none }
+}
 
 /* =================== Listado de resultados =================== */
 .odsc-mr__results{
@@ -588,9 +591,34 @@
   var resultsState = { items: [], page: 1, focusedIndex: -1 };
 
   function setResults(matched){
+    // Si el marcador enfocado ya no esta entre los visibles, limpiar resalte.
+    if(focusedLayer){
+      var stillVisible = false;
+      for(var i = 0; i < matched.length; i++){
+        if(matched[i].layer === focusedLayer){ stillVisible = true; break; }
+      }
+      if(!stillVisible){
+        if(pendingFocus){ clearTimeout(pendingFocus); pendingFocus = null; }
+        pendingFocusToken++;
+        try { map.closePopup(); } catch(e){}
+        clearFocusedLayer();
+      }
+    }
     resultsState.items = matched;
     resultsState.page = 1;
-    resultsState.focusedIndex = -1;
+    // No reseteamos focusedIndex aqui; lo recolocamos si el layer sigue visible:
+    if(focusedLayer){
+      var newIdx = -1;
+      for(var j = 0; j < matched.length; j++){
+        if(matched[j].layer === focusedLayer){ newIdx = j; break; }
+      }
+      resultsState.focusedIndex = newIdx;
+      if(newIdx >= 0){
+        resultsState.page = Math.floor(newIdx / RESULTS_PAGE_SIZE) + 1;
+      }
+    } else {
+      resultsState.focusedIndex = -1;
+    }
     renderResults();
   }
 
@@ -626,7 +654,8 @@
       var em  = r.email ? emailLinks(r.email) : "—";
       var area = r.area || r.categoria_principal || "";
       var direccion = r.direccion ? escapeHtml(r.direccion) : "—";
-      return '<div class="odsc-mr__result-item" data-idx="'+globalIdx+'" tabindex="0" role="button">' +
+      var focusedCls = (globalIdx === resultsState.focusedIndex) ? " is-focused" : "";
+      return '<div class="odsc-mr__result-item'+focusedCls+'" data-idx="'+globalIdx+'" tabindex="0" role="button">' +
         '<div class="odsc-mr__result-item-title">'+escapeHtml(r.entidad || "Sin entidad")+'</div>' +
         (area ? '<span class="odsc-mr__result-item-area">'+escapeHtml(area)+'</span>' : '<span></span>') +
         '<div class="odsc-mr__result-item-fields">' +
@@ -642,6 +671,8 @@
   /* ===== Resalte del marcador enfocado (estilo + halo neon) ===== */
   var focusedLayer = null;
   var focusedOverlay = null;
+  var pendingFocus = null;       // setTimeout id para cancelar focus en transito
+  var pendingFocusToken = 0;     // contador para invalidar callbacks tardios
   function defaultMarkerRadius(){ return MOBILE_QUERY.matches ? 9 : 7; }
 
   function clearFocusedLayer(){
@@ -649,17 +680,24 @@
       try { map.removeLayer(focusedOverlay); } catch(e){}
       focusedOverlay = null;
     }
-    if(!focusedLayer) return;
-    var s = focusedLayer._mrOriginalStyle;
-    if(s){
-      focusedLayer.setStyle({ weight: s.weight, color: s.color, fillColor: s.fillColor, fillOpacity: s.fillOpacity });
-      if(focusedLayer.setRadius) focusedLayer.setRadius(s.radius);
+    if(focusedLayer){
+      var s = focusedLayer._mrOriginalStyle;
+      if(s){
+        try {
+          focusedLayer.setStyle({ weight: s.weight, color: s.color, fillColor: s.fillColor, fillOpacity: s.fillOpacity });
+          if(focusedLayer.setRadius) focusedLayer.setRadius(s.radius);
+        } catch(e){}
+      }
+      focusedLayer = null;
     }
-    focusedLayer = null;
+    document.querySelectorAll(".odsc-mr__result-item.is-focused").forEach(function(el){
+      el.classList.remove("is-focused");
+    });
+    resultsState.focusedIndex = -1;
   }
 
   function highlightLayer(layer){
-    if(focusedLayer === layer) return;
+    // Siempre limpia el resalte previo (incluso si es el mismo layer reseteado).
     clearFocusedLayer();
     if(!layer) return;
     if(!layer._mrOriginalStyle){
@@ -673,9 +711,11 @@
       };
     }
     var bigR = defaultMarkerRadius() + 6;
-    layer.setStyle({ weight: 3, color: "#0d1b2a", fillOpacity: 1 });
-    if(layer.setRadius) layer.setRadius(bigR);
-    if(layer.bringToFront) layer.bringToFront();
+    try {
+      layer.setStyle({ weight: 3, color: "#0d1b2a", fillOpacity: 1 });
+      if(layer.setRadius) layer.setRadius(bigR);
+      if(layer.bringToFront) layer.bringToFront();
+    } catch(e){ return; }
     focusedLayer = layer;
 
     // Halo neon: divIcon DOM superpuesto (CSS box-shadow no aplica sobre canvas)
@@ -687,22 +727,43 @@
       iconSize: [size, size],
       iconAnchor: [size/2, size/2]
     });
-    focusedOverlay = L.marker(layer.getLatLng(), { icon: icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
+    focusedOverlay = L.marker(layer.getLatLng(), {
+      icon: icon, interactive: false, keyboard: false, zIndexOffset: 1000
+    }).addTo(map);
   }
 
   function focusEntity(globalIdx){
     var it = resultsState.items[globalIdx];
     if(!it) return;
+
+    // Toggle: click sobre la fila ya enfocada -> defocus
+    if(resultsState.focusedIndex === globalIdx && focusedLayer === it.layer){
+      try { map.closePopup(); } catch(e){}
+      clearFocusedLayer();
+      return;
+    }
+
+    // Cancela focus en transito anterior
+    if(pendingFocus){ clearTimeout(pendingFocus); pendingFocus = null; }
+    var token = ++pendingFocusToken;
+
     resultsState.focusedIndex = globalIdx;
     document.querySelectorAll(".odsc-mr__result-item").forEach(function(el){
       el.classList.toggle("is-focused", parseInt(el.getAttribute("data-idx"), 10) === globalIdx);
     });
+
     var ll = it.layer.getLatLng();
     map.flyTo([ll.lat, ll.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
-    setTimeout(function(){
+
+    pendingFocus = setTimeout(function(){
+      pendingFocus = null;
+      if(token !== pendingFocusToken) return; // otra fila pidio focus despues
       function openAndHighlight(){
-        if(it.layer.openPopup) it.layer.openPopup();
+        if(token !== pendingFocusToken) return;
+        // Resaltar ANTES de abrir popup para que popupclose del popup
+        // anterior no borre el nuevo focus.
         highlightLayer(it.layer);
+        if(it.layer.openPopup) it.layer.openPopup();
       }
       if(cluster.hasLayer && cluster.hasLayer(it.layer) && cluster.zoomToShowLayer){
         cluster.zoomToShowLayer(it.layer, openAndHighlight);
@@ -710,14 +771,20 @@
         openAndHighlight();
       }
     }, 600);
+
     if(MOBILE_QUERY.matches){
       var mapEl = document.querySelector(".odsc-mr__map-wrap");
       if(mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
-  // Limpiar resalte al cerrar el popup
-  map.on("popupclose", function(){ clearFocusedLayer(); });
+  // popupclose: solo limpiar si el popup que se cierra pertenece al layer enfocado.
+  // Esto evita que abrir un popup nuevo (que cierra el anterior) borre el focus
+  // recien aplicado al nuevo marcador.
+  map.on("popupclose", function(e){
+    if(!e || !e.popup) return;
+    if(e.popup._source === focusedLayer) clearFocusedLayer();
+  });
 
   document.addEventListener("click", function(ev){
     var item = ev.target.closest(".odsc-mr__result-item");
