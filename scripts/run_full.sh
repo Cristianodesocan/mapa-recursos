@@ -36,6 +36,7 @@ run "1_vg_disc"      Rscript pipeline/01_extraccion/extract_vg_discapacidad.R  -
 run "2_transform"    Rscript pipeline/02_transformacion/transform_recursos.R   --root "$(pwd)"
 run "3_geocode"      Rscript pipeline/03_geocodificacion/geocode_recursos.R    --root "$(pwd)" --geocoder cascade
 run "4_analisis"     Rscript pipeline/04_analisis/qa_recursos.R                --root "$(pwd)"
+run "6_export_web"   Rscript pipeline/06_export_web/build_web_data.R           --root "$(pwd)"
 run "5_supabase"     Rscript pipeline/05_supabase/upload_supabase.R            --root "$(pwd)"
 
 step "TODO OK"

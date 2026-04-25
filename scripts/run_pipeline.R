@@ -98,6 +98,9 @@ validate_outputs <- function(stage, root) {
       file.path(root, "salidas", "04_analisis", "directorio_recursos.xlsx"),
       file.path(root, "salidas", "04_analisis", "recursos_canonicos.csv")
     ),
+    export_web = c(
+      file.path(root, "web", "data", "recursos.json")
+    ),
     supabase = character()
   )
   missing <- expected[[stage]][!file.exists(expected[[stage]])]
@@ -123,7 +126,8 @@ print_run_summary <- function(timings, root) {
     file.path(root, "salidas", "04_analisis", "recursos_por_municipio.csv"),
     file.path(root, "salidas", "04_analisis", "recursos_por_categoria.csv"),
     file.path(root, "salidas", "04_analisis", "recursos_canonicos.csv"),
-    file.path(root, "salidas", "04_analisis", "directorio_recursos.xlsx")
+    file.path(root, "salidas", "04_analisis", "directorio_recursos.xlsx"),
+    file.path(root, "web", "data", "recursos.json")
   )
   cli::cli_h2("Salidas disponibles")
   for (path in outputs[file.exists(outputs)]) {
@@ -155,7 +159,7 @@ main <- function() {
   )
   if (isTRUE(args$`install-deps`)) install_missing_packages(packages)
 
-  stage_order <- c("extraccion", "transformacion", "geocodificacion", "analisis", "supabase")
+  stage_order <- c("extraccion", "transformacion", "geocodificacion", "analisis", "export_web", "supabase")
   scraper_extra <- character()
   if (!is.null(args$`scraper-config`)) {
     scraper_extra <- c(scraper_extra, "--config", args$`scraper-config`)
@@ -184,6 +188,9 @@ main <- function() {
     ),
     analisis = list(
       list(path = file.path(root, "pipeline", "04_analisis", "qa_recursos.R"))
+    ),
+    export_web = list(
+      list(path = file.path(root, "pipeline", "06_export_web", "build_web_data.R"))
     ),
     supabase = list(
       list(

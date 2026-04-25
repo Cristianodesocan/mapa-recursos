@@ -20,7 +20,7 @@ on:
         default: "false"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   run:
@@ -82,6 +82,18 @@ jobs:
             ARGS="$ARGS --skip-supabase"
           fi
           Rscript scripts/run_pipeline.R $ARGS
+
+      - name: Commit del JSON de la web si cambio
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/recursos.json
+          if git diff --staged --quiet; then
+            echo "Sin cambios en web/data/recursos.json"
+          else
+            git commit -m "data: actualizar web/data/recursos.json"
+            git push
+          fi
 
       - name: Guardar logs y salidas como artifact
         if: always()
