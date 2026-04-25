@@ -1,0 +1,41 @@
+## Configuracion del scraper del Registro de Asociaciones de Canarias
+## Endpoint publico del Gobierno de Canarias (Consulta Asociaciones)
+
+base_url: "https://www3.gobiernodecanarias.org/entidadesjuridicas/asociaciones/consulta_asociaciones/api/asociacionesSearch"
+
+# Parametros de la API
+order_by: "nci"
+order_sort: "asc"
+show_all_elements: false   # mejor false: paginamos manualmente
+page_size: 10              # tamaño de pagina del endpoint
+
+# Politica de scraping (ser respetuosos)
+sleep_seconds: 1.0
+max_retries: 4
+backoff_base: 2            # segundos: espera = backoff_base ^ intento
+timeout_seconds: 45
+user_agent: "MapaRecursosObservatorio/2.0 (investigacion@odesocan.org)"
+
+# Cache de paginas en bruto (resume si se corta)
+cache_dir: "cache/scraper_pages/asociaciones"
+overwrite_cache: false
+
+# Limites (utiles para pruebas; null = sin limite)
+max_pages: null
+start_page: 0
+
+# Filtros aplicados al combinar (post-scraping). Los filtros del endpoint
+# (actividad/isla/municipio) NO se usan para mantener un dump unico que
+# luego se filtra localmente y permite cachear.
+filtros:
+  solo_con_web: false
+  solo_vigentes: false
+  islas: []          # ej: ["TENERIFE", "GRAN CANARIA"]
+  actividades: []    # ej: ["SERVICIOS SOCIALES", "ASISTENCIA SOCIAL"]
+  ambitos: []        # ej: ["AUTONOMICO", "INSULAR", "MUNICIPAL"]
+
+# Salidas
+output:
+  raw_csv: "salidas/01_extraccion/asociaciones_registro_raw.csv"
+  filtered_csv: "salidas/01_extraccion/asociaciones_registro_filtrado.csv"
+  json_summary: "salidas/01_extraccion/asociaciones_registro_resumen.json"

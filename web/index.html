@@ -1,0 +1,562 @@
+<!-- =====================================================================
+  Bloque embebible: Mapa de Recursos del Tercer Sector en Canarias
+  Pegable en un modulo "Codigo" de Divi.
+  Responsive + capa de diseno especifica para movil (bottom-sheet).
+  Todo el HTML/CSS/JS esta scoped bajo .odsc-mr para no chocar con el tema.
+  ===================================================================== -->
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+
+<style>
+/* =================== Reset scoped =================== */
+.odsc-mr, .odsc-mr *{box-sizing:border-box}
+.odsc-mr{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1d2433;line-height:1.5;max-width:1200px;margin:0 auto;padding:16px 12px}
+@media (min-width:720px){ .odsc-mr{padding:24px 16px} }
+
+/* =================== Hero =================== */
+.odsc-mr__hero{background:linear-gradient(135deg,#0d1b2a 0%,#143a55 55%,#1b6f7d 100%);color:#fff;border-radius:14px;padding:22px 18px;position:relative;overflow:hidden;box-shadow:0 10px 28px rgba(13,27,42,.22)}
+.odsc-mr__hero::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 220px at 90% 0%,rgba(255,255,255,.18),transparent 60%);pointer-events:none}
+.odsc-mr__eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85;margin-bottom:6px}
+.odsc-mr__title{font-size:22px;font-weight:700;margin:0 0 8px;line-height:1.2}
+.odsc-mr__subtitle{font-size:14px;max-width:780px;opacity:.95;margin:0}
+@media (min-width:720px){
+  .odsc-mr__hero{border-radius:16px;padding:44px 40px}
+  .odsc-mr__eyebrow{font-size:12px;margin-bottom:8px}
+  .odsc-mr__title{font-size:34px;margin-bottom:10px}
+  .odsc-mr__subtitle{font-size:16px}
+}
+
+/* =================== KPIs =================== */
+.odsc-mr__kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0 0}
+@media (min-width:640px){ .odsc-mr__kpis{grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px} }
+.odsc-mr__kpi{background:#fff;border:1px solid #d6e3e5;border-radius:10px;padding:12px 8px;text-align:center;box-shadow:0 2px 8px rgba(13,27,42,.06);position:relative;overflow:hidden}
+.odsc-mr__kpi::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#00c8b4 0%,#82c0c7 100%)}
+.odsc-mr__kpi-num{font-size:22px;font-weight:700;color:#0d1b2a;line-height:1}
+.odsc-mr__kpi-lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#5b6b80;margin-top:4px}
+@media (min-width:640px){ .odsc-mr__kpi{padding:16px;border-radius:12px} .odsc-mr__kpi-num{font-size:26px} .odsc-mr__kpi-lbl{font-size:11px;letter-spacing:.08em;margin-top:6px} }
+
+/* =================== Intro =================== */
+.odsc-mr__intro{margin:18px 0 12px;color:#3a4a5e;font-size:14px;max-width:880px}
+@media (min-width:720px){ .odsc-mr__intro{margin:22px 0 14px;font-size:15px} }
+
+/* =================== Toolbar =================== */
+.odsc-mr__toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center}
+.odsc-mr__chip{font-size:11px;padding:4px 10px;border-radius:999px;background:#E0FAF7;color:#0d1b2a;border:1px solid #b8e6df;font-weight:500}
+.odsc-mr__hint{font-size:11px;color:#5b6b80;flex-basis:100%;margin-top:4px}
+@media (min-width:640px){ .odsc-mr__chip{font-size:12px} .odsc-mr__hint{flex-basis:auto;margin-top:0;margin-left:auto;font-size:12px} }
+
+/* =================== Mapa wrapper =================== */
+.odsc-mr__map-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid #d6e3e5;box-shadow:0 6px 18px rgba(13,27,42,.09)}
+.odsc-mr__map{height:520px;width:100%;background:#eef2f6}
+@media (min-width:720px){ .odsc-mr__map-wrap{border-radius:14px} .odsc-mr__map{height:620px} }
+@media (max-width:480px){ .odsc-mr__map{height:62vh;min-height:380px} }
+
+.odsc-mr__loading,.odsc-mr__error{position:absolute;top:0;left:0;right:0;padding:8px 12px;font-size:12px;text-align:center;z-index:1100;color:#fff}
+.odsc-mr__loading{background:#0d1b2a}
+.odsc-mr__error{background:#b00020;display:none}
+
+/* =================== Panel filtros (CARD ENCIMA del mapa) =================== */
+.odsc-mr__filters{
+  background:#fff;padding:14px 16px;border-radius:12px;
+  border:1px solid #d6e3e5;box-shadow:0 4px 12px rgba(13,27,42,.06);
+  font-size:13px;margin-bottom:12px;
+}
+.odsc-mr__filters h4{margin:0 0 10px;font-size:13px;color:#0d1b2a;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.odsc-mr__filters h4::before{content:"";display:inline-block;width:14px;height:14px;background:#00c8b4;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 5h18l-7 9v6l-4-2v-4z'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 5h18l-7 9v6l-4-2v-4z'/></svg>") center/contain no-repeat}
+.odsc-mr__filters input[type=text],
+.odsc-mr__filters select{width:100%;padding:8px 10px;border:1px solid #cdd9db;border-radius:6px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+.odsc-mr__filters input[type=text]:focus,
+.odsc-mr__filters select:focus{border-color:#00c8b4;box-shadow:0 0 0 3px rgba(0,200,180,.18)}
+.odsc-mr__filters label{display:block;line-height:1.6;font-size:13px;padding:1px 0;cursor:pointer}
+.odsc-mr__filters input[type=checkbox]{transform:translateY(1px);margin-right:6px;accent-color:#00c8b4}
+
+/* Layout grid del card de filtros */
+.odsc-mr__filters-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:720px){
+  .odsc-mr__filters-grid{grid-template-columns:1fr 1fr 1fr;gap:14px}
+}
+.odsc-mr__field{min-width:0}
+.odsc-mr__field-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#0d1b2a;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.odsc-mr__field-title-text{display:inline-flex;align-items:center;gap:6px}
+.odsc-mr__field-count{display:inline-flex;align-items:center;justify-content:center;background:#00c8b4;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:18px;padding:1px 7px;letter-spacing:0;text-transform:none}
+.odsc-mr__field-count.is-empty{background:#cdd9db;color:#0d1b2a}
+.odsc-mr__field-actions{display:flex;gap:4px}
+.odsc-mr__chips-wrap{display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow-y:auto;padding:6px;border:1px solid #ecf1f1;border-radius:6px;background:#fafdfd}
+.odsc-mr__field-toggle-icon{display:none}
+.odsc-mr__chip-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid #cdd9db;color:#1d2433;cursor:pointer;user-select:none;transition:background .12s,border-color .12s,color .12s}
+.odsc-mr__chip-check input{display:none}
+.odsc-mr__chip-check.is-on{background:#00c8b4;border-color:#00c8b4;color:#fff;font-weight:600}
+.odsc-mr__chip-check:hover{border-color:#00c8b4}
+.odsc-mr__extras{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;padding-top:8px;border-top:1px dashed #d6e3e5;align-items:center;font-size:13px}
+.odsc-mr__status{margin-left:auto;color:#5b6b80;font-size:12px}
+.odsc-mr__status strong{color:#0d1b2a;font-weight:700}
+.odsc-mr__mini{font-size:11px;padding:3px 9px;border:1px solid #b8e6df;background:#E0FAF7;color:#0d1b2a;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:500}
+.odsc-mr__mini:hover{background:#00c8b4;color:#fff;border-color:#00c8b4}
+
+/* =================== Leyenda (encima del mapa, junto a filtros) =================== */
+.odsc-mr__legend{
+  position:absolute;bottom:12px;right:12px;z-index:1000;
+  background:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.18);
+  font-size:12px;line-height:1.7;color:#1d2433;max-height:60%;overflow-y:auto;max-width:240px;
+}
+.odsc-mr__legend-title{font-weight:700;color:#0d1b2a;font-size:12px;margin-bottom:4px}
+.odsc-mr__legend-toggle{display:none}
+.odsc-mr__dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;border:1px solid #222;vertical-align:middle}
+
+/* =================== Popup =================== */
+.odsc-mr .leaflet-popup-content{font-family:inherit;color:#1d2433;font-size:12px;line-height:1.4;min-width:240px}
+.odsc-mr .odsc-pop-title{font-weight:700;font-size:14px;margin-bottom:4px;color:#0d1b2a}
+.odsc-mr .odsc-pop-meta{color:#5b6b80;font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.odsc-mr .odsc-pop-row{margin:2px 0}
+.odsc-mr .odsc-pop-warn{margin-top:6px;color:#a05a00;font-size:11px}
+
+/* =================== Footer =================== */
+.odsc-mr__footer{margin-top:14px;font-size:12px;color:#5b6b80;text-align:right}
+.odsc-mr__footer a{color:#0d1b2a;text-decoration:none}
+.odsc-mr__footer a:hover{text-decoration:underline}
+
+/* =====================================================================
+   ============= AJUSTES MOVIL (<= 720px) ============
+   ===================================================================== */
+@media (max-width:720px){
+  .odsc-mr__filters{padding:12px}
+  .odsc-mr__filters label{font-size:14px}
+  .odsc-mr__filters input[type=text],
+  .odsc-mr__filters select{padding:10px 12px;font-size:14px}
+  .odsc-mr__chip-check{font-size:13px;padding:6px 12px}
+  .odsc-mr__chips-wrap{max-height:240px;margin-top:8px}
+
+  /* Filtros como DROPDOWNS en movil */
+  .odsc-mr__filters-grid{gap:8px}
+  .odsc-mr__field-title{
+    background:#fff;border:1px solid #cdd9db;border-radius:8px;
+    padding:11px 14px;cursor:pointer;margin-bottom:0;
+    text-transform:none;letter-spacing:0;font-size:14px;
+  }
+  .odsc-mr__field-title:active{background:#fafdfd}
+  .odsc-mr__field-toggle-icon{
+    display:inline-block;width:0;height:0;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:6px solid #0d1b2a;transition:transform .2s ease;
+    margin-left:6px;
+  }
+  .odsc-mr__field.is-open .odsc-mr__field-toggle-icon{transform:rotate(-180deg)}
+  .odsc-mr__field-actions{display:none;margin-top:8px}
+  .odsc-mr__chips-wrap{display:none}
+  .odsc-mr__field.is-open .odsc-mr__field-actions{display:flex}
+  .odsc-mr__field.is-open .odsc-mr__chips-wrap{display:flex}
+}
+
+  /* Leyenda movil: colapsable */
+  .odsc-mr__legend{
+    bottom:auto;top:12px;right:12px;
+    padding:0;border-radius:8px;max-width:none;width:auto;
+    overflow:visible;background:transparent;box-shadow:none;
+  }
+  .odsc-mr__legend-toggle{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fff;padding:8px 14px;border-radius:999px;
+    border:1.5px solid #00c8b4;cursor:pointer;color:#0d1b2a;font-weight:600;font-size:12px;
+    box-shadow:0 2px 10px rgba(13,27,42,.18);font-family:inherit;
+  }
+  .odsc-mr__legend-toggle::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#00c8b4}
+  .odsc-mr__legend-body{
+    display:none;background:#fff;padding:10px 12px;border-radius:10px;
+    margin-top:6px;box-shadow:0 2px 10px rgba(13,27,42,.18);
+    max-height:55vh;overflow-y:auto;font-size:12px;line-height:1.7;
+  }
+  .odsc-mr__legend.is-open .odsc-mr__legend-body{display:block}
+  .odsc-mr__legend-title{display:none}
+
+  /* Esconder zoom de leaflet en movil para liberar espacio */
+  .odsc-mr .leaflet-control-zoom{display:none}
+}
+</style>
+
+<section class="odsc-mr" id="odsc-mr-root">
+  <div class="odsc-mr__hero">
+    <div class="odsc-mr__eyebrow">Observatorio Social de Canarias</div>
+    <h2 class="odsc-mr__title">Red de recursos del Tercer Sector en Canarias</h2>
+    <p class="odsc-mr__subtitle">Un mapa interactivo de las entidades sociales que tejen la red de apoyo en el archipielago: violencia machista, igualdad, dependencia, discapacidad, infancia, juventud, mayores, migraciones, vivienda y mucho mas.</p>
+
+    <div class="odsc-mr__kpis">
+      <div class="odsc-mr__kpi"><div class="odsc-mr__kpi-num" id="odsc-kpi-recursos">-</div><div class="odsc-mr__kpi-lbl">Recursos</div></div>
+      <div class="odsc-mr__kpi"><div class="odsc-mr__kpi-num" id="odsc-kpi-islas">-</div><div class="odsc-mr__kpi-lbl">Islas</div></div>
+      <div class="odsc-mr__kpi"><div class="odsc-mr__kpi-num" id="odsc-kpi-municipios">-</div><div class="odsc-mr__kpi-lbl">Municipios</div></div>
+      <div class="odsc-mr__kpi"><div class="odsc-mr__kpi-num" id="odsc-kpi-categorias">-</div><div class="odsc-mr__kpi-lbl">Tematicas</div></div>
+    </div>
+  </div>
+
+  <p class="odsc-mr__intro">
+    Selecciona una o varias <strong>tematicas</strong> en el panel para descubrir las entidades que trabajan cada area.
+    Filtra por <strong>isla</strong>, busca por nombre o municipio, y haz clic en cada punto para ver los datos de contacto.
+  </p>
+
+  <div class="odsc-mr__toolbar">
+    <span class="odsc-mr__chip">Datos abiertos</span>
+    <span class="odsc-mr__chip">Tiempo real</span>
+    <span class="odsc-mr__chip">ODESOCAN</span>
+    <span class="odsc-mr__hint">Marca tematicas para empezar</span>
+  </div>
+
+  <!-- Panel filtros: ENCIMA del mapa -->
+  <aside class="odsc-mr__filters" id="odsc-filters">
+    <h4>Filtros</h4>
+    <div id="odsc-filters-body"><em>Cargando filtros...</em></div>
+  </aside>
+
+  <div class="odsc-mr__map-wrap">
+    <div class="odsc-mr__loading" id="odsc-loading">Cargando recursos desde la base de datos...</div>
+    <div class="odsc-mr__error" id="odsc-error"></div>
+    <div class="odsc-mr__map" id="odsc-mr-map"></div>
+
+    <!-- Leyenda -->
+    <div class="odsc-mr__legend" id="odsc-legend">
+      <button class="odsc-mr__legend-toggle" id="odsc-legend-toggle" type="button" aria-label="Mostrar leyenda">Leyenda</button>
+      <div class="odsc-mr__legend-title">Tematicas</div>
+      <div class="odsc-mr__legend-body" id="odsc-legend-body"></div>
+    </div>
+  </div>
+
+  <div class="odsc-mr__footer">
+    Elaborado por <a href="https://odesocan.org" target="_blank" rel="noopener noreferrer">ODESOCAN - Observatorio Social de Canarias</a>
+  </div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script>
+(function(){
+  if (window.__odscMrInit) return; window.__odscMrInit = true;
+
+  /* ===== Config ===== */
+  var SUPABASE_URL = "https://kdpsjutsgvghdtzoskkg.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_LL0oGzLODGvbNB6kWTW12Q_w-tGJ_ll";
+  var SUPABASE_SCHEMA = "recursos";
+  var SUPABASE_TABLE = "entidades";
+  var PAGE_SIZE = 1000;
+  var CANARIAS_BBOX = { min_lat: 27.3, max_lat: 29.6, min_lon: -18.5, max_lon: -13.0 };
+  var MOBILE_QUERY = window.matchMedia("(max-width: 720px)");
+
+  var CATEGORY_COLORS = {
+    "Violencia machista": "#d62728", "Igualdad y mujer": "#e377c2", "LGTBI+": "#f7b6d2",
+    "Dependencia": "#17becf", "Discapacidad": "#2ca02c", "Personas mayores": "#1f77b4",
+    "Infancia": "#ffbb78", "Juventud": "#ff7f0e", "Sanidad": "#9edae5",
+    "Adicciones": "#c49c94", "Migraciones": "#8c564b", "Minorias etnicas": "#bcbd22",
+    "Vivienda y exclusion": "#dbdb8d", "Educacion": "#aec7e8", "Patrimonio": "#8c6d31",
+    "Cultura": "#9467bd", "Deportes": "#98df8a", "Medio ambiente": "#556b2f",
+    "Animales": "#c5b0d5", "Cooperacion y desarrollo": "#393b79", "Religion": "#d4af37",
+    "Profesional": "#7b4173", "Vecinal": "#637939", "Otros": "#6c757d"
+  };
+  var DEFAULT_COLOR = "#6c757d";
+
+  /* ===== Lista canonica de los 88 municipios de Canarias =====
+   * Fuente: 2_transformacion/data/canarias_municipios.csv. Se usa para
+   * normalizar el KPI "Municipios" frente a variantes mal formateadas
+   * por la extraccion del PDF (ej. "LaOliva", "BreñaAlta", "Las Palmas
+   * de GranCanaria") y strings basura ("Local C", "sinnúmero", etc.). */
+  var OFFICIAL_MUNICIPIOS = [
+    "Frontera","El Pinar de El Hierro","Valverde",
+    "Agulo","Alajeró","Hermigua","San Sebastián de la Gomera","Valle Gran Rey","Vallehermoso",
+    "Barlovento","Breña Alta","Breña Baja","Fuencaliente de la Palma","Garafía","Los Llanos de Aridane",
+    "El Paso","Puntagorda","Puntallana","San Andrés y Sauces","Santa Cruz de la Palma","Tazacorte",
+    "Tijarafe","Villa de Mazo",
+    "Adeje","Arafo","Arico","Arona","Buenavista del Norte","Candelaria","Fasnia","Garachico",
+    "Granadilla de Abona","La Guancha","Guía de Isora","Güímar","Icod de los Vinos",
+    "San Cristóbal de La Laguna","La Matanza de Acentejo","La Orotava","Puerto de la Cruz","Los Realejos",
+    "El Rosario","San Juan de la Rambla","San Miguel de Abona","Santa Cruz de Tenerife","Santa Úrsula",
+    "Santiago del Teide","El Sauzal","Los Silos","Tacoronte","El Tanque","Tegueste",
+    "La Victoria de Acentejo","Vilaflor de Chasna",
+    "Agaete","Agüimes","Artenara","Arucas","Firgas","Gáldar","Ingenio","Mogán","Moya",
+    "Las Palmas de Gran Canaria","San Bartolomé de Tirajana","La Aldea de San Nicolás",
+    "Vega de San Mateo","Santa Brígida","Santa Lucía de Tirajana","Santa María de Guía de Gran Canaria",
+    "Tejeda","Telde","Teror","Valleseco","Valsequillo de Gran Canaria",
+    "Antigua","Betancuria","La Oliva","Pájara","Puerto del Rosario","Tuineje",
+    "Arrecife","Haría","San Bartolomé","Teguise","Tías","Tinajo","Yaiza"
+  ];
+
+  /* ===== Helpers ===== */
+  function slugMunicipio(s){
+    if(!s) return "";
+    return String(s).toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"")
+      .trim();
+  }
+  var OFFICIAL_SLUGS = (function(){ var s=new Set(); OFFICIAL_MUNICIPIOS.forEach(function(m){ s.add(slugMunicipio(m)); }); return s; })();
+  var TOTAL_MUNICIPIOS_CANARIAS = OFFICIAL_MUNICIPIOS.length; // 88
+
+  function escapeHtml(s){ if(s===null||s===undefined) return ""; return String(s).replace(/[&<>"']/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]; }); }
+  function safeUrl(w){ if(!w) return null; var t=String(w).trim(); if(/^(javascript|data|vbscript|file):/i.test(t)) return null; if(/^https?:\/\//i.test(t)) return t; if(/^[A-Za-z0-9._-]+\.[A-Za-z]{2,}(\/.*)?$/.test(t)) return "https://"+t; return null; }
+  function phoneLinks(t){ if(!t) return ""; return String(t).split(/;\s*/).filter(Boolean).map(function(n){ var raw=n.replace(/[^0-9+]/g,""); return raw?'<a href="tel:'+raw+'">'+escapeHtml(n)+'</a>':escapeHtml(n); }).join(" &middot; "); }
+  function emailLinks(e){ if(!e) return ""; return String(e).split(/;\s*/).filter(Boolean).map(function(x){ return '<a href="mailto:'+escapeHtml(x)+'">'+escapeHtml(x)+'</a>'; }).join("<br/>"); }
+  function inCanarias(lat, lon){ return lat>=CANARIAS_BBOX.min_lat && lat<=CANARIAS_BBOX.max_lat && lon>=CANARIAS_BBOX.min_lon && lon<=CANARIAS_BBOX.max_lon; }
+  function uniqSorted(rows, key){ var s=new Set(); rows.forEach(function(r){ var v=r[key]; if(v) s.add(v); }); return Array.from(s).sort(function(a,b){ return a.localeCompare(b,"es"); }); }
+  function animateCount(el, target){
+    if(!el) return; var t0=performance.now(), dur=900;
+    function step(t){ var p=Math.min(1,(t-t0)/dur); el.textContent=Math.round(target*(1-Math.pow(1-p,3))).toLocaleString("es-ES"); if(p<1) requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
+
+  /* ===== Fetch paginado ===== */
+  function fetchPage(offset){
+    var url = SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE +
+      "?select=id_recurso,entidad,categoria_principal,subcategoria,area,tipo_entidad," +
+      "isla,municipio,codigo_postal,direccion,telefono,email,web,horario,plazas," +
+      "descripcion,lat,lon,geocode_status,match_level,validated_in_island" +
+      "&lat=not.is.null&lon=not.is.null&geocode_status=eq.ok" +
+      "&limit=" + PAGE_SIZE + "&offset=" + offset;
+    return fetch(url, { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY, "Accept-Profile": SUPABASE_SCHEMA } })
+      .then(function(r){ if(!r.ok) return r.text().then(function(b){ throw new Error("HTTP "+r.status+": "+b.slice(0,200)); }); return r.json(); });
+  }
+  function loadAll(onProgress){
+    var all=[], offset=0;
+    function next(){
+      return fetchPage(offset).then(function(p){
+        all = all.concat(p);
+        if(onProgress) onProgress(all.length);
+        if(p.length < PAGE_SIZE || offset > 200000) return all;
+        offset += PAGE_SIZE; return next();
+      });
+    }
+    return next();
+  }
+
+  /* ===== Mapa ===== */
+  var map = L.map("odsc-mr-map", { preferCanvas: true, scrollWheelZoom: true, zoomControl: !MOBILE_QUERY.matches }).setView([28.3, -15.5], 8);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19, subdomains: "abcd"
+  }).addTo(map);
+  var cluster = L.markerClusterGroup({ showCoverageOnHover: false, disableClusteringAtZoom: 14, maxClusterRadius: 50 });
+  map.addLayer(cluster);
+
+  var markers = [];
+
+  function popupHtml(r){
+    var meta = [r.categoria_principal, r.subcategoria, r.area].filter(Boolean).map(escapeHtml).join(" &middot; ");
+    var ubic = [r.municipio, r.isla].filter(Boolean).join(", ");
+    var rows = [];
+    if(r.direccion) rows.push('<div class="odsc-pop-row"><strong>Direccion:</strong> '+escapeHtml(r.direccion)+'</div>');
+    if(ubic) rows.push('<div class="odsc-pop-row"><strong>Ubicacion:</strong> '+escapeHtml(ubic)+'</div>');
+    var tel = phoneLinks(r.telefono); if(tel) rows.push('<div class="odsc-pop-row"><strong>Telefono:</strong> '+tel+'</div>');
+    var em = emailLinks(r.email); if(em) rows.push('<div class="odsc-pop-row"><strong>Email:</strong> '+em+'</div>');
+    if(r.web){ var u = safeUrl(r.web); rows.push(u ? '<div class="odsc-pop-row"><strong>Web:</strong> <a href="'+escapeHtml(u)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(r.web)+'</a></div>' : '<div class="odsc-pop-row"><strong>Web:</strong> '+escapeHtml(r.web)+'</div>'); }
+    if(r.horario) rows.push('<div class="odsc-pop-row"><strong>Horario:</strong> '+escapeHtml(r.horario)+'</div>');
+    if(r.plazas!==null && r.plazas!==undefined) rows.push('<div class="odsc-pop-row"><strong>Plazas:</strong> '+escapeHtml(r.plazas)+'</div>');
+    if(r.descripcion) rows.push('<div class="odsc-pop-row" style="margin-top:6px;color:#3a4a5e">'+escapeHtml(r.descripcion)+'</div>');
+    if(r.match_level && r.match_level !== "direccion_completa") rows.push('<div class="odsc-pop-warn">&#9888; Posicion aproximada ('+escapeHtml(r.match_level)+')</div>');
+    return '<div class="odsc-pop-title">'+escapeHtml(r.entidad || "Sin entidad")+'</div>' +
+           (meta ? '<div class="odsc-pop-meta">'+meta+'</div>' : '') +
+           '<div>'+rows.join("")+'</div>';
+  }
+
+  function buildMarkers(rows){
+    cluster.clearLayers(); markers = [];
+    var kept=0, dropped=0;
+    rows.forEach(function(r){
+      if(r.lat===null||r.lon===null){ dropped++; return; }
+      if(!inCanarias(r.lat, r.lon)){ dropped++; return; }
+      var color = CATEGORY_COLORS[r.categoria_principal] || DEFAULT_COLOR;
+      var m = L.circleMarker([r.lat, r.lon], { radius:7, weight:1, color:"#222", fillColor:color, fillOpacity:0.85 });
+      m.bindPopup(popupHtml(r), { maxWidth: 340, autoPanPaddingTopLeft:[20,20], autoPanPaddingBottomRight:[20,80] });
+      m.bindTooltip([r.entidad, [r.municipio, r.isla].filter(Boolean).join(", ")].filter(Boolean).join(" - "));
+      markers.push({
+        layer: m,
+        meta: { isla:r.isla||"", cat:r.categoria_principal||"", tipo:r.tipo_entidad||"",
+                subcat:r.subcategoria||"", entidad:r.entidad||"", municipio:r.municipio||"",
+                tel:!!(r.telefono && String(r.telefono).trim()), email:!!(r.email && String(r.email).trim()) }
+      });
+      kept++;
+    });
+    return { kept: kept, dropped: dropped };
+  }
+
+  /* ===== Panel filtros (chips encima del mapa, dropdowns en movil) ===== */
+  function buildFilterPanel(rows){
+    var islas = uniqSorted(rows, "isla");
+    var cats  = uniqSorted(rows, "categoria_principal");
+    var tipos = uniqSorted(rows, "tipo_entidad");
+    var subcats = uniqSorted(rows, "subcategoria");
+    function chip(cls, v, checked){
+      var on = checked ? "is-on" : "";
+      var attr = checked ? " checked" : "";
+      return '<label class="odsc-mr__chip-check '+on+'"><input type="checkbox" class="'+cls+'" value="'+escapeHtml(v)+'"'+attr+'><span>'+escapeHtml(v)+'</span></label>';
+    }
+    function chips(cls, vals, defaultChecked){
+      return vals.map(function(v){ return chip(cls, v, defaultChecked); }).join("");
+    }
+    function fieldHTML(cls, label, vals, defaultChecked, openOnDesktop){
+      var openCls = openOnDesktop ? " is-open-desktop" : "";
+      return '<div class="odsc-mr__field" data-target="'+cls+'"'+openCls+'>' +
+        '<div class="odsc-mr__field-title" data-toggle="1">' +
+          '<span class="odsc-mr__field-title-text">'+escapeHtml(label)+
+            ' <span class="odsc-mr__field-count" data-count-for="'+cls+'">0</span>'+
+          '</span>' +
+          '<span class="odsc-mr__field-toggle-icon" aria-hidden="true"></span>' +
+        '</div>' +
+        '<div class="odsc-mr__field-actions">' +
+          '<button type="button" class="odsc-mr__mini" data-target="'+cls+'" data-action="all">Todas</button>' +
+          '<button type="button" class="odsc-mr__mini" data-target="'+cls+'" data-action="none">Ninguna</button>' +
+        '</div>' +
+        '<div class="odsc-mr__chips-wrap">'+chips(cls, vals, defaultChecked)+'</div>' +
+      '</div>';
+    }
+    var subOpts = subcats.map(function(v){ return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>'; }).join("");
+    return '' +
+      '<div style="margin-bottom:10px">' +
+        '<input id="odsc-search" type="text" placeholder="Buscar entidad o municipio..." inputmode="search"/>' +
+      '</div>' +
+      '<div class="odsc-mr__filters-grid">' +
+        fieldHTML("odsc-isla", "Isla", islas, true, true) +
+        fieldHTML("odsc-cat",  "Tematica", cats, false, true) +
+        '<div class="odsc-mr__field-stack">' +
+          (tipos.length ? fieldHTML("odsc-tipo", "Tipo de entidad", tipos, true, false) : '') +
+          '<div class="odsc-mr__field" style="margin-top:8px">' +
+            '<div class="odsc-mr__field-title"><span class="odsc-mr__field-title-text">Subcategoria</span></div>' +
+            '<select id="odsc-subcat" style="margin-top:6px"><option value="">(todas)</option>'+subOpts+'</select>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="odsc-mr__extras">' +
+        '<label><input type="checkbox" id="odsc-tel"/> Solo con telefono</label>' +
+        '<label><input type="checkbox" id="odsc-email"/> Solo con email</label>' +
+        '<div class="odsc-mr__status" id="odsc-status"></div>' +
+      '</div>';
+  }
+
+  /* Recalcula el contador de seleccion por cada grupo */
+  function updateFieldCounts(){
+    document.querySelectorAll(".odsc-mr__field-count").forEach(function(el){
+      var cls = el.getAttribute("data-count-for");
+      if(!cls) return;
+      var total = document.querySelectorAll("input."+cls).length;
+      var checked = document.querySelectorAll("input."+cls+":checked").length;
+      el.textContent = checked + "/" + total;
+      el.classList.toggle("is-empty", checked === 0);
+    });
+  }
+
+  function applyFilter(){
+    function checked(cls){ return Array.prototype.slice.call(document.querySelectorAll("input."+cls+":checked")).map(function(e){ return e.value; }); }
+    var islas = new Set(checked("odsc-isla"));
+    var cats  = new Set(checked("odsc-cat"));
+    var tipos = new Set(checked("odsc-tipo"));
+    var subcat = (document.getElementById("odsc-subcat")||{}).value || "";
+    var onlyTel = !!(document.getElementById("odsc-tel")||{}).checked;
+    var onlyMail= !!(document.getElementById("odsc-email")||{}).checked;
+    var q = ((document.getElementById("odsc-search")||{}).value || "").toLowerCase();
+
+    cluster.clearLayers();
+    var visible = 0; var batch = [];
+    markers.forEach(function(it){
+      var meta = it.meta; var ok = true;
+      if(islas.size && meta.isla && !islas.has(meta.isla)) ok = false;
+      if(ok && (cats.size === 0 || (meta.cat && !cats.has(meta.cat)))) ok = false;
+      if(ok && tipos.size && meta.tipo && !tipos.has(meta.tipo)) ok = false;
+      if(ok && subcat && meta.subcat !== subcat) ok = false;
+      if(ok && onlyTel && !meta.tel) ok = false;
+      if(ok && onlyMail && !meta.email) ok = false;
+      if(ok && q){ var h = (meta.entidad+" "+meta.municipio).toLowerCase(); if(h.indexOf(q) < 0) ok = false; }
+      if(ok){ batch.push(it.layer); visible++; }
+    });
+    cluster.addLayers(batch);
+    var s = document.getElementById("odsc-status");
+    if(s){ s.innerHTML = '<strong>'+visible.toLocaleString("es-ES")+'</strong> recursos visibles de '+markers.length.toLocaleString("es-ES"); }
+  }
+
+  /* Sincroniza la clase is-on del chip-check con el estado del checkbox */
+  function syncChipClasses(){
+    document.querySelectorAll(".odsc-mr__chip-check").forEach(function(lbl){
+      var inp = lbl.querySelector("input[type=checkbox]");
+      if(!inp) return;
+      lbl.classList.toggle("is-on", inp.checked);
+    });
+  }
+
+  /* ===== Leyenda ===== */
+  var legendEl = document.getElementById("odsc-legend");
+  var legendBody = document.getElementById("odsc-legend-body");
+  var legendToggle = document.getElementById("odsc-legend-toggle");
+  legendBody.innerHTML = Object.keys(CATEGORY_COLORS).map(function(k){
+    return '<div><span class="odsc-mr__dot" style="background:'+CATEGORY_COLORS[k]+'"></span>'+escapeHtml(k)+'</div>';
+  }).join("");
+  if(legendToggle){
+    legendToggle.addEventListener("click", function(){ legendEl.classList.toggle("is-open"); });
+  }
+
+  /* ===== Bootstrap ===== */
+  var loadingEl = document.getElementById("odsc-loading");
+  var errorEl = document.getElementById("odsc-error");
+  var filtersBody = document.getElementById("odsc-filters-body");
+
+  loadAll(function(n){ loadingEl.textContent = "Cargando recursos desde la base de datos... " + n.toLocaleString("es-ES"); })
+    .then(function(rows){
+      var info = buildMarkers(rows);
+      filtersBody.innerHTML = buildFilterPanel(rows);
+
+      var islasUnq = uniqSorted(rows, "isla").length;
+      // KPI municipios: solo cuenta valores que matchean la lista canonica
+      // de los 88 municipios oficiales (via slug). Filtra variantes mal
+      // formateadas y basura capturada del PDF.
+      var muniSlugSet = new Set();
+      rows.forEach(function(r){
+        var slug = slugMunicipio(r.municipio);
+        if(slug && OFFICIAL_SLUGS.has(slug)) muniSlugSet.add(slug);
+      });
+      var munisUnq = muniSlugSet.size;
+      var catsUnq = uniqSorted(rows, "categoria_principal").length;
+      animateCount(document.getElementById("odsc-kpi-recursos"), info.kept);
+      animateCount(document.getElementById("odsc-kpi-islas"), islasUnq);
+      animateCount(document.getElementById("odsc-kpi-municipios"), munisUnq);
+      animateCount(document.getElementById("odsc-kpi-categorias"), catsUnq);
+      var muniLbl = document.querySelector('#odsc-kpi-municipios + .odsc-mr__kpi-lbl');
+      if(muniLbl) muniLbl.textContent = "Municipios de " + TOTAL_MUNICIPIOS_CANARIAS;
+
+      document.querySelectorAll("input.odsc-isla,input.odsc-cat,input.odsc-tipo,#odsc-tel,#odsc-email")
+        .forEach(function(e){ e.addEventListener("change", function(){ syncChipClasses(); updateFieldCounts(); applyFilter(); }); });
+      var sub = document.getElementById("odsc-subcat"); if(sub) sub.addEventListener("change", applyFilter);
+      var search = document.getElementById("odsc-search"); if(search) search.addEventListener("input", applyFilter);
+      document.querySelectorAll("button.odsc-mr__mini").forEach(function(btn){
+        btn.addEventListener("click", function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          var target = btn.getAttribute("data-target");
+          var action = btn.getAttribute("data-action");
+          document.querySelectorAll("input."+target).forEach(function(i){ i.checked = (action === "all"); });
+          syncChipClasses();
+          updateFieldCounts();
+          applyFilter();
+        });
+      });
+      // Toggle expand/collapse en field-title (relevante en movil; en desktop
+      // los chips ya son visibles por CSS y el click solo cambia clase silenciosa).
+      document.querySelectorAll('.odsc-mr__field-title[data-toggle="1"]').forEach(function(t){
+        t.addEventListener("click", function(){
+          var field = t.closest(".odsc-mr__field");
+          if(field) field.classList.toggle("is-open");
+        });
+      });
+
+      syncChipClasses();
+      updateFieldCounts();
+      applyFilter();
+      map.fitBounds([[CANARIAS_BBOX.min_lat, CANARIAS_BBOX.min_lon],[CANARIAS_BBOX.max_lat, CANARIAS_BBOX.max_lon]], { padding:[20,20] });
+      // En movil, el mapa cambia tamanos al rotar/abrir teclado
+      window.addEventListener("resize", function(){ map.invalidateSize(); });
+
+      loadingEl.style.display = "none";
+      if(info.dropped) console.warn("Descartados "+info.dropped+" recursos fuera de bbox Canarias o sin coords.");
+    })
+    .catch(function(e){
+      console.error(e);
+      loadingEl.style.display = "none";
+      errorEl.style.display = "block";
+      errorEl.textContent = "Error cargando datos: " + e.message;
+    });
+})();
+</script>

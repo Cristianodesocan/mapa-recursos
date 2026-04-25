@@ -1,0 +1,26 @@
+# Secretos
+.env
+.env.local
+.env.*.local
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# IDE / SO
+.DS_Store
+.claude/
+.vscode/
+.idea/
+
+# Salidas regenerables
+cache/
+logs/
+salidas/
+
+# Backups
+*.bak
+*.tmp
+*~
