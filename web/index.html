@@ -102,9 +102,13 @@
   background:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.18);
   font-size:12px;line-height:1.7;color:#1d2433;max-height:60%;overflow-y:auto;max-width:240px;
 }
-.odsc-mr__legend-title{font-weight:700;color:#0d1b2a;font-size:12px;margin-bottom:4px}
+.odsc-mr__legend-title{font-weight:700;color:#0d1b2a;font-size:12px;margin-bottom:6px}
 .odsc-mr__legend-toggle{display:none}
 .odsc-mr__dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;border:1px solid #222;vertical-align:middle}
+.odsc-mr__legend-item{display:flex;align-items:center;padding:3px 6px;border-radius:6px;cursor:pointer;user-select:none;transition:background .12s,color .12s}
+.odsc-mr__legend-item:hover{background:#E0FAF7}
+.odsc-mr__legend-item.is-active{background:#0d1b2a;color:#fff;font-weight:600}
+.odsc-mr__legend-item.is-active .odsc-mr__dot{border-color:#fff}
 
 /* =================== Popup =================== */
 .odsc-mr .leaflet-popup-content{font-family:inherit;color:#1d2433;font-size:12px;line-height:1.4;min-width:240px}
@@ -469,8 +473,40 @@
   var legendBody = document.getElementById("odsc-legend-body");
   var legendToggle = document.getElementById("odsc-legend-toggle");
   legendBody.innerHTML = Object.keys(CATEGORY_COLORS).map(function(k){
-    return '<div><span class="odsc-mr__dot" style="background:'+CATEGORY_COLORS[k]+'"></span>'+escapeHtml(k)+'</div>';
+    return '<div class="odsc-mr__legend-item" data-cat="'+escapeHtml(k)+'" role="button" tabindex="0">' +
+             '<span class="odsc-mr__dot" style="background:'+CATEGORY_COLORS[k]+'"></span>'+escapeHtml(k) +
+           '</div>';
   }).join("");
+
+  /* Click en leyenda: seleccion unica. Si la categoria ya es la unica activa,
+   * marcar todas (modo "ver todo"). */
+  function selectOnlyCategory(cat){
+    var inputs = document.querySelectorAll("input.odsc-cat");
+    if(!inputs.length) return;
+    var checked = Array.prototype.filter.call(inputs, function(i){ return i.checked; });
+    var isOnlyThis = checked.length === 1 && checked[0].value === cat;
+    inputs.forEach(function(i){
+      i.checked = isOnlyThis ? true : (i.value === cat);
+    });
+    document.querySelectorAll(".odsc-mr__legend-item").forEach(function(el){
+      el.classList.toggle("is-active", !isOnlyThis && el.getAttribute("data-cat") === cat);
+    });
+    syncChipClasses();
+    updateFieldCounts();
+    applyFilter();
+  }
+  legendBody.addEventListener("click", function(ev){
+    var item = ev.target.closest(".odsc-mr__legend-item");
+    if(!item) return;
+    selectOnlyCategory(item.getAttribute("data-cat"));
+  });
+  legendBody.addEventListener("keydown", function(ev){
+    if(ev.key !== "Enter" && ev.key !== " ") return;
+    var item = ev.target.closest(".odsc-mr__legend-item");
+    if(!item) return;
+    ev.preventDefault();
+    selectOnlyCategory(item.getAttribute("data-cat"));
+  });
   if(legendToggle){
     legendToggle.addEventListener("click", function(){ legendEl.classList.toggle("is-open"); });
   }
