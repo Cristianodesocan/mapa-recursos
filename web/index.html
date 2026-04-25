@@ -126,25 +126,51 @@
    ============= AJUSTES MOVIL (<= 720px) ============
    ===================================================================== */
 @media (max-width:720px){
-  .odsc-mr__filters{padding:12px}
+  /* Densidad general */
+  .odsc-mr{padding:12px 10px}
+
+  /* Hero compacto */
+  .odsc-mr__hero{padding:18px 16px;border-radius:12px}
+  .odsc-mr__title{font-size:20px;line-height:1.2}
+  .odsc-mr__subtitle{font-size:13px}
+  .odsc-mr__eyebrow{font-size:10px;margin-bottom:4px}
+
+  /* KPIs un poco mas compactos */
+  .odsc-mr__kpis{gap:8px;margin-top:12px}
+  .odsc-mr__kpi{padding:10px 6px}
+  .odsc-mr__kpi-num{font-size:20px}
+  .odsc-mr__kpi-lbl{font-size:9px}
+
+  /* Ocultar elementos decorativos que comen espacio vertical */
+  .odsc-mr__intro{display:none}
+  .odsc-mr__toolbar{display:none}
+
+  /* Filtros */
+  .odsc-mr__filters{padding:10px;margin-bottom:10px}
+  .odsc-mr__filters > div:first-child{margin-bottom:8px}
   .odsc-mr__filters label{font-size:14px}
   .odsc-mr__filters input[type=text],
-  .odsc-mr__filters select{padding:10px 12px;font-size:14px}
-  .odsc-mr__chip-check{font-size:13px;padding:6px 12px}
+  .odsc-mr__filters select{padding:11px 12px;font-size:15px}
+  .odsc-mr__chip-check{font-size:13px;padding:7px 13px}
   .odsc-mr__chips-wrap{max-height:240px;margin-top:8px}
+  .odsc-mr__extras{flex-direction:column;align-items:flex-start;gap:6px;font-size:13px}
+  .odsc-mr__status{margin-left:0;width:100%;text-align:right}
 
   /* Filtros como DROPDOWNS en movil */
   .odsc-mr__filters-grid{gap:8px}
   .odsc-mr__field-title{
-    background:#fff;border:1px solid #cdd9db;border-radius:8px;
-    padding:11px 14px;cursor:pointer;margin-bottom:0;
+    background:#fafdfd;border:1px solid #cdd9db;border-radius:8px;
+    padding:12px 14px;cursor:pointer;margin-bottom:0;
     text-transform:none;letter-spacing:0;font-size:14px;
+    min-height:44px;
   }
-  .odsc-mr__field-title:active{background:#fafdfd}
+  .odsc-mr__field-title:active{background:#E0FAF7}
+  .odsc-mr__field.is-open .odsc-mr__field-title{background:#0d1b2a;color:#fff;border-color:#0d1b2a}
+  .odsc-mr__field.is-open .odsc-mr__field-count{background:#fff;color:#0d1b2a}
   .odsc-mr__field-toggle-icon{
     display:inline-block;width:0;height:0;
     border-left:5px solid transparent;border-right:5px solid transparent;
-    border-top:6px solid #0d1b2a;transition:transform .2s ease;
+    border-top:6px solid currentColor;transition:transform .2s ease;
     margin-left:6px;
   }
   .odsc-mr__field.is-open .odsc-mr__field-toggle-icon{transform:rotate(-180deg)}
@@ -152,31 +178,49 @@
   .odsc-mr__chips-wrap{display:none}
   .odsc-mr__field.is-open .odsc-mr__field-actions{display:flex}
   .odsc-mr__field.is-open .odsc-mr__chips-wrap{display:flex}
+
+  /* Mapa: mas alto */
+  .odsc-mr__map{height:72vh;min-height:440px}
+
+  /* Footer compacto */
+  .odsc-mr__footer{font-size:11px;margin-top:10px;text-align:center}
 }
 
-  /* Leyenda movil: colapsable */
+/* Ultra-pequenos: <=380px (iPhone SE, etc.) */
+@media (max-width:380px){
+  .odsc-mr__title{font-size:18px}
+  .odsc-mr__hero{padding:14px 12px}
+  .odsc-mr__kpi-num{font-size:18px}
+}
+
+  /* Leyenda movil: FAB inferior derecha + popover */
   .odsc-mr__legend{
-    bottom:auto;top:12px;right:12px;
-    padding:0;border-radius:8px;max-width:none;width:auto;
+    bottom:14px;top:auto;right:14px;
+    padding:0;border-radius:0;max-width:none;width:auto;
     overflow:visible;background:transparent;box-shadow:none;
+    z-index:1100;
   }
   .odsc-mr__legend-toggle{
     display:inline-flex;align-items:center;gap:6px;
-    background:#fff;padding:8px 14px;border-radius:999px;
-    border:1.5px solid #00c8b4;cursor:pointer;color:#0d1b2a;font-weight:600;font-size:12px;
-    box-shadow:0 2px 10px rgba(13,27,42,.18);font-family:inherit;
+    background:#0d1b2a;padding:11px 16px;border-radius:999px;
+    border:1.5px solid #00c8b4;cursor:pointer;color:#fff;font-weight:600;font-size:13px;
+    box-shadow:0 4px 14px rgba(13,27,42,.45);font-family:inherit;
   }
-  .odsc-mr__legend-toggle::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#00c8b4}
+  .odsc-mr__legend-toggle::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#00c8b4}
   .odsc-mr__legend-body{
     display:none;background:#fff;padding:10px 12px;border-radius:10px;
-    margin-top:6px;box-shadow:0 2px 10px rgba(13,27,42,.18);
-    max-height:55vh;overflow-y:auto;font-size:12px;line-height:1.7;
+    margin-top:6px;box-shadow:0 4px 14px rgba(13,27,42,.25);
+    max-height:60vh;overflow-y:auto;font-size:13px;line-height:1.8;
+    position:absolute;bottom:54px;right:0;min-width:200px;
   }
   .odsc-mr__legend.is-open .odsc-mr__legend-body{display:block}
   .odsc-mr__legend-title{display:none}
+  .odsc-mr__legend-item{padding:6px 8px}
 
-  /* Esconder zoom de leaflet en movil para liberar espacio */
-  .odsc-mr .leaflet-control-zoom{display:none}
+  /* Zoom de leaflet visible y mas grande en movil */
+  .odsc-mr .leaflet-control-zoom a{
+    width:40px;height:40px;line-height:40px;font-size:18px;
+  }
 }
 </style>
 
@@ -318,7 +362,7 @@
   }
 
   /* ===== Mapa ===== */
-  var map = L.map("odsc-mr-map", { preferCanvas: true, scrollWheelZoom: true, zoomControl: !MOBILE_QUERY.matches }).setView([28.3, -15.5], 8);
+  var map = L.map("odsc-mr-map", { preferCanvas: true, scrollWheelZoom: true, zoomControl: true, tap: true }).setView([28.3, -15.5], 8);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19, subdomains: "abcd"
   }).addTo(map);
@@ -352,7 +396,7 @@
       if(r.lat===null||r.lon===null){ dropped++; return; }
       if(!inCanarias(r.lat, r.lon)){ dropped++; return; }
       var color = CATEGORY_COLORS[r.categoria_principal] || DEFAULT_COLOR;
-      var m = L.circleMarker([r.lat, r.lon], { radius:7, weight:1, color:"#222", fillColor:color, fillOpacity:0.85 });
+      var m = L.circleMarker([r.lat, r.lon], { radius: MOBILE_QUERY.matches ? 9 : 7, weight:1, color:"#222", fillColor:color, fillOpacity:0.85 });
       m.bindPopup(popupHtml(r), { maxWidth: 340, autoPanPaddingTopLeft:[20,20], autoPanPaddingBottomRight:[20,80] });
       m.bindTooltip([r.entidad, [r.municipio, r.isla].filter(Boolean).join(", ")].filter(Boolean).join(" - "));
       markers.push({
