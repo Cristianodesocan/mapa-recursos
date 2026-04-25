@@ -117,6 +117,40 @@
 .odsc-mr .odsc-pop-row{margin:2px 0}
 .odsc-mr .odsc-pop-warn{margin-top:6px;color:#a05a00;font-size:11px}
 
+/* =================== Listado de resultados =================== */
+.odsc-mr__results{
+  margin-top:12px;background:#fff;border:1px solid #d6e3e5;border-radius:12px;
+  box-shadow:0 4px 12px rgba(13,27,42,.06);padding:14px 16px;
+  scroll-margin-top:12px;
+}
+.odsc-mr__results-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #00c8b4}
+.odsc-mr__results-title{margin:0;font-size:13px;font-weight:700;color:#0d1b2a;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.odsc-mr__results-count{background:#0d1b2a;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 9px;letter-spacing:0;text-transform:none}
+.odsc-mr__results-pager{display:flex;align-items:center;gap:6px;font-size:12px;color:#5b6b80}
+.odsc-mr__results-pager button{font-family:inherit;font-size:12px;padding:5px 10px;border:1px solid #cdd9db;background:#fafdfd;border-radius:6px;color:#0d1b2a;cursor:pointer;font-weight:600}
+.odsc-mr__results-pager button:hover:not(:disabled){background:#00c8b4;color:#fff;border-color:#00c8b4}
+.odsc-mr__results-pager button:disabled{opacity:.4;cursor:default}
+.odsc-mr__results-pager .pageinfo{min-width:80px;text-align:center;font-variant-numeric:tabular-nums}
+
+.odsc-mr__results-list{display:flex;flex-direction:column;gap:8px}
+.odsc-mr__results-empty{color:#5b6b80;font-size:13px;text-align:center;padding:18px 0}
+
+.odsc-mr__result-item{
+  display:grid;grid-template-columns:1fr auto;gap:6px 12px;
+  padding:10px 12px;border:1px solid #ecf1f1;border-radius:8px;
+  background:#fafdfd;cursor:pointer;transition:border-color .12s,background .12s,box-shadow .12s;
+  align-items:start;
+}
+.odsc-mr__result-item:hover{border-color:#00c8b4;background:#fff;box-shadow:0 2px 8px rgba(13,27,42,.06)}
+.odsc-mr__result-item.is-focused{border-color:#0d1b2a;background:#fff;box-shadow:0 0 0 2px rgba(0,200,180,.25)}
+.odsc-mr__result-item-title{font-weight:700;color:#0d1b2a;font-size:14px;line-height:1.25;grid-column:1}
+.odsc-mr__result-item-area{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:#E0FAF7;color:#0d1b2a;border:1px solid #b8e6df;white-space:nowrap;align-self:start}
+.odsc-mr__result-item-fields{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px 14px;font-size:12px;color:#3a4a5e;margin-top:2px}
+.odsc-mr__result-item-field{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.odsc-mr__result-item-field strong{color:#5b6b80;font-weight:600;text-transform:uppercase;font-size:9px;letter-spacing:.08em;display:block}
+.odsc-mr__result-item-field a{color:#0d1b2a;font-weight:500}
+.odsc-mr__result-item-field a:hover{color:#00c8b4}
+
 /* =================== Footer =================== */
 .odsc-mr__footer{margin-top:14px;font-size:12px;color:#5b6b80;text-align:right}
 .odsc-mr__footer a{color:#0d1b2a;text-decoration:none}
@@ -184,6 +218,14 @@
 
   /* Footer compacto */
   .odsc-mr__footer{font-size:11px;margin-top:10px;text-align:center}
+
+  /* Resultados: en movil, fila unica y campos apilados */
+  .odsc-mr__results{padding:12px;border-radius:10px}
+  .odsc-mr__results-head{gap:8px}
+  .odsc-mr__results-pager{margin-left:auto}
+  .odsc-mr__result-item-fields{grid-template-columns:1fr 1fr}
+  .odsc-mr__result-item-title{font-size:13px}
+  .odsc-mr__result-item-area{font-size:9px;padding:2px 7px}
 }
 
 /* Ultra-pequenos: <=380px (iPhone SE, etc.) */
@@ -268,6 +310,23 @@
       <div class="odsc-mr__legend-body" id="odsc-legend-body"></div>
     </div>
   </div>
+
+  <aside class="odsc-mr__results" id="odsc-results" aria-live="polite">
+    <div class="odsc-mr__results-head">
+      <h3 class="odsc-mr__results-title">
+        Recursos visibles
+        <span class="odsc-mr__results-count" id="odsc-results-count">0</span>
+      </h3>
+      <div class="odsc-mr__results-pager">
+        <button type="button" id="odsc-results-prev" aria-label="Pagina anterior">&laquo;</button>
+        <span class="pageinfo" id="odsc-results-pageinfo">— de —</span>
+        <button type="button" id="odsc-results-next" aria-label="Pagina siguiente">&raquo;</button>
+      </div>
+    </div>
+    <div class="odsc-mr__results-list" id="odsc-results-list">
+      <div class="odsc-mr__results-empty">No hay recursos que mostrar. Marca alguna tematica en los filtros.</div>
+    </div>
+  </aside>
 
   <div class="odsc-mr__footer">
     Elaborado por <a href="https://odesocan.org" target="_blank" rel="noopener noreferrer">ODESOCAN - Observatorio Social de Canarias</a>
@@ -401,6 +460,7 @@
       m.bindTooltip([r.entidad, [r.municipio, r.isla].filter(Boolean).join(", ")].filter(Boolean).join(" - "));
       markers.push({
         layer: m,
+        row: r,
         meta: { isla:r.isla||"", cat:r.categoria_principal||"", tipo:r.tipo_entidad||"",
                 subcat:r.subcategoria||"", entidad:r.entidad||"", municipio:r.municipio||"",
                 tel:!!(r.telefono && String(r.telefono).trim()), email:!!(r.email && String(r.email).trim()) }
@@ -486,7 +546,7 @@
     var q = ((document.getElementById("odsc-search")||{}).value || "").toLowerCase();
 
     cluster.clearLayers();
-    var visible = 0; var batch = [];
+    var visible = 0; var batch = []; var matched = [];
     markers.forEach(function(it){
       var meta = it.meta; var ok = true;
       if(islas.size && meta.isla && !islas.has(meta.isla)) ok = false;
@@ -496,12 +556,109 @@
       if(ok && onlyTel && !meta.tel) ok = false;
       if(ok && onlyMail && !meta.email) ok = false;
       if(ok && q){ var h = (meta.entidad+" "+meta.municipio).toLowerCase(); if(h.indexOf(q) < 0) ok = false; }
-      if(ok){ batch.push(it.layer); visible++; }
+      if(ok){ batch.push(it.layer); matched.push(it); visible++; }
     });
     cluster.addLayers(batch);
     var s = document.getElementById("odsc-status");
     if(s){ s.innerHTML = '<strong>'+visible.toLocaleString("es-ES")+'</strong> recursos visibles de '+markers.length.toLocaleString("es-ES"); }
+    setResults(matched);
   }
+
+  /* ===== Listado paginado de resultados sincronizado con filtros ===== */
+  var RESULTS_PAGE_SIZE = 10;
+  var resultsState = { items: [], page: 1, focusedIndex: -1 };
+
+  function setResults(matched){
+    resultsState.items = matched;
+    resultsState.page = 1;
+    resultsState.focusedIndex = -1;
+    renderResults();
+  }
+
+  function renderResults(){
+    var listEl = document.getElementById("odsc-results-list");
+    var countEl = document.getElementById("odsc-results-count");
+    var pageinfoEl = document.getElementById("odsc-results-pageinfo");
+    var prevBtn = document.getElementById("odsc-results-prev");
+    var nextBtn = document.getElementById("odsc-results-next");
+    if(!listEl) return;
+    var items = resultsState.items;
+    var total = items.length;
+    var totalPages = Math.max(1, Math.ceil(total / RESULTS_PAGE_SIZE));
+    if(resultsState.page > totalPages) resultsState.page = totalPages;
+    if(resultsState.page < 1) resultsState.page = 1;
+    var start = (resultsState.page - 1) * RESULTS_PAGE_SIZE;
+    var page = items.slice(start, start + RESULTS_PAGE_SIZE);
+
+    if(countEl) countEl.textContent = total.toLocaleString("es-ES");
+    if(pageinfoEl) pageinfoEl.textContent = total === 0 ? "—" : ("Pag. " + resultsState.page + " de " + totalPages);
+    if(prevBtn) prevBtn.disabled = resultsState.page <= 1;
+    if(nextBtn) nextBtn.disabled = resultsState.page >= totalPages;
+
+    if(total === 0){
+      listEl.innerHTML = '<div class="odsc-mr__results-empty">No hay recursos que coincidan con los filtros actuales.</div>';
+      return;
+    }
+    listEl.innerHTML = page.map(function(it, i){
+      var globalIdx = start + i;
+      var r = it.row;
+      var ubic = [r.municipio, r.isla].filter(Boolean).map(escapeHtml).join(", ");
+      var tel = r.telefono ? phoneLinks(r.telefono) : "—";
+      var em  = r.email ? emailLinks(r.email) : "—";
+      var area = r.area || r.categoria_principal || "";
+      var direccion = r.direccion ? escapeHtml(r.direccion) : "—";
+      return '<div class="odsc-mr__result-item" data-idx="'+globalIdx+'" tabindex="0" role="button">' +
+        '<div class="odsc-mr__result-item-title">'+escapeHtml(r.entidad || "Sin entidad")+'</div>' +
+        (area ? '<span class="odsc-mr__result-item-area">'+escapeHtml(area)+'</span>' : '<span></span>') +
+        '<div class="odsc-mr__result-item-fields">' +
+          '<div class="odsc-mr__result-item-field"><strong>Direccion</strong>'+direccion+'</div>' +
+          '<div class="odsc-mr__result-item-field"><strong>Municipio / Isla</strong>'+(ubic || "—")+'</div>' +
+          '<div class="odsc-mr__result-item-field"><strong>Telefono</strong>'+tel+'</div>' +
+          '<div class="odsc-mr__result-item-field"><strong>Email</strong>'+em+'</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function focusEntity(globalIdx){
+    var it = resultsState.items[globalIdx];
+    if(!it) return;
+    resultsState.focusedIndex = globalIdx;
+    document.querySelectorAll(".odsc-mr__result-item").forEach(function(el){
+      el.classList.toggle("is-focused", parseInt(el.getAttribute("data-idx"), 10) === globalIdx);
+    });
+    var ll = it.layer.getLatLng();
+    map.flyTo([ll.lat, ll.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
+    setTimeout(function(){
+      if(it.layer.openPopup) it.layer.openPopup();
+      else cluster.zoomToShowLayer(it.layer, function(){ it.layer.openPopup(); });
+    }, 600);
+    if(MOBILE_QUERY.matches){
+      var mapEl = document.querySelector(".odsc-mr__map-wrap");
+      if(mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  document.addEventListener("click", function(ev){
+    var item = ev.target.closest(".odsc-mr__result-item");
+    if(!item) return;
+    if(ev.target.closest("a")) return; // enlaces tel:/mailto: no disparan focus
+    focusEntity(parseInt(item.getAttribute("data-idx"), 10));
+  });
+  document.addEventListener("keydown", function(ev){
+    if(ev.key !== "Enter" && ev.key !== " ") return;
+    var item = ev.target.closest(".odsc-mr__result-item");
+    if(!item) return;
+    ev.preventDefault();
+    focusEntity(parseInt(item.getAttribute("data-idx"), 10));
+  });
+  // Wiring de paginacion
+  (function(){
+    var prev = document.getElementById("odsc-results-prev");
+    var next = document.getElementById("odsc-results-next");
+    if(prev) prev.addEventListener("click", function(){ resultsState.page--; renderResults(); window.scrollTo({ top: document.getElementById("odsc-results").offsetTop - 12, behavior: "smooth" }); });
+    if(next) next.addEventListener("click", function(){ resultsState.page++; renderResults(); window.scrollTo({ top: document.getElementById("odsc-results").offsetTop - 12, behavior: "smooth" }); });
+  })();
 
   /* Sincroniza la clase is-on del chip-check con el estado del checkbox */
   function syncChipClasses(){
