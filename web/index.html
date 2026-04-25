@@ -117,6 +117,25 @@
 .odsc-mr .odsc-pop-row{margin:2px 0}
 .odsc-mr .odsc-pop-warn{margin-top:6px;color:#a05a00;font-size:11px}
 
+/* =================== Halo neon del marcador enfocado =================== */
+.odsc-mr__pulse-icon{pointer-events:none;background:transparent;border:0}
+.odsc-mr__pulse{
+  width:100%;height:100%;border-radius:50%;
+  border:2px solid var(--odsc-color, #00c8b4);
+  background:radial-gradient(circle, rgba(255,255,255,.0) 35%, var(--odsc-color, #00c8b4) 70%, rgba(255,255,255,0) 100%);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.85),
+    0 0 8px 2px var(--odsc-color, #00c8b4),
+    0 0 18px 6px var(--odsc-color, #00c8b4),
+    0 0 32px 10px var(--odsc-color, #00c8b4);
+  animation: odsc-mr-pulse 1.4s ease-in-out infinite;
+}
+@keyframes odsc-mr-pulse{
+  0%   { transform:scale(.95); opacity:.95 }
+  50%  { transform:scale(1.18); opacity:.6 }
+  100% { transform:scale(.95); opacity:.95 }
+}
+
 /* =================== Listado de resultados =================== */
 .odsc-mr__results{
   margin-top:12px;background:#fff;border:1px solid #d6e3e5;border-radius:12px;
@@ -620,6 +639,57 @@
     }).join("");
   }
 
+  /* ===== Resalte del marcador enfocado (estilo + halo neon) ===== */
+  var focusedLayer = null;
+  var focusedOverlay = null;
+  function defaultMarkerRadius(){ return MOBILE_QUERY.matches ? 9 : 7; }
+
+  function clearFocusedLayer(){
+    if(focusedOverlay){
+      try { map.removeLayer(focusedOverlay); } catch(e){}
+      focusedOverlay = null;
+    }
+    if(!focusedLayer) return;
+    var s = focusedLayer._mrOriginalStyle;
+    if(s){
+      focusedLayer.setStyle({ weight: s.weight, color: s.color, fillColor: s.fillColor, fillOpacity: s.fillOpacity });
+      if(focusedLayer.setRadius) focusedLayer.setRadius(s.radius);
+    }
+    focusedLayer = null;
+  }
+
+  function highlightLayer(layer){
+    if(focusedLayer === layer) return;
+    clearFocusedLayer();
+    if(!layer) return;
+    if(!layer._mrOriginalStyle){
+      var o = layer.options || {};
+      layer._mrOriginalStyle = {
+        radius: o.radius || defaultMarkerRadius(),
+        weight: o.weight || 1,
+        color: o.color || "#222",
+        fillColor: o.fillColor,
+        fillOpacity: o.fillOpacity != null ? o.fillOpacity : 0.85
+      };
+    }
+    var bigR = defaultMarkerRadius() + 6;
+    layer.setStyle({ weight: 3, color: "#0d1b2a", fillOpacity: 1 });
+    if(layer.setRadius) layer.setRadius(bigR);
+    if(layer.bringToFront) layer.bringToFront();
+    focusedLayer = layer;
+
+    // Halo neon: divIcon DOM superpuesto (CSS box-shadow no aplica sobre canvas)
+    var color = (layer.options && layer.options.fillColor) || "#00c8b4";
+    var size = bigR * 2 + 14;
+    var icon = L.divIcon({
+      className: "odsc-mr__pulse-icon",
+      html: '<div class="odsc-mr__pulse" style="--odsc-color:'+color+';"></div>',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
+    });
+    focusedOverlay = L.marker(layer.getLatLng(), { icon: icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(map);
+  }
+
   function focusEntity(globalIdx){
     var it = resultsState.items[globalIdx];
     if(!it) return;
@@ -630,14 +700,24 @@
     var ll = it.layer.getLatLng();
     map.flyTo([ll.lat, ll.lng], Math.max(map.getZoom(), 15), { duration: 0.8 });
     setTimeout(function(){
-      if(it.layer.openPopup) it.layer.openPopup();
-      else cluster.zoomToShowLayer(it.layer, function(){ it.layer.openPopup(); });
+      function openAndHighlight(){
+        if(it.layer.openPopup) it.layer.openPopup();
+        highlightLayer(it.layer);
+      }
+      if(cluster.hasLayer && cluster.hasLayer(it.layer) && cluster.zoomToShowLayer){
+        cluster.zoomToShowLayer(it.layer, openAndHighlight);
+      } else {
+        openAndHighlight();
+      }
     }, 600);
     if(MOBILE_QUERY.matches){
       var mapEl = document.querySelector(".odsc-mr__map-wrap");
       if(mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
+
+  // Limpiar resalte al cerrar el popup
+  map.on("popupclose", function(){ clearFocusedLayer(); });
 
   document.addEventListener("click", function(ev){
     var item = ev.target.closest(".odsc-mr__result-item");
