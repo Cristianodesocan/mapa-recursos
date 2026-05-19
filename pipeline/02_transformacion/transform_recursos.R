@@ -161,72 +161,6 @@ empty_canonical <- function() {
   )
 }
 
-load_residencias <- function(path) {
-  if (!file.exists(path)) {
-    log_warn("Fuente residencias ausente: {path}")
-    return(empty_canonical())
-  }
-  read_csv(path, show_col_types = FALSE) %>%
-    transmute(
-      fuente_tipo = "pdf_residencias",
-      fuente_archivo = fuente_archivo,
-      fuente_url = NA_character_,
-      identificador_fuente = as.character(pagina),
-      pagina = as.integer(pagina),
-      categoria_principal = categoria_principal,
-      subcategoria = subcategoria,
-      area = NA_character_,
-      isla = isla,
-      municipio = municipio,
-      codigo_postal = NA_character_,
-      entidad = entidad,
-      cif = NA_character_,
-      descripcion = NA_character_,
-      direccion = direccion,
-      telefono_raw = telefono_raw,
-      email_raw = email_raw,
-      web = NA_character_,
-      horario = NA_character_,
-      plazas_raw = plazas_raw,
-      recurso_igualdad = NA_character_,
-      ambito = NA_character_,
-      vigente = NA
-    )
-}
-
-load_vg_discapacidad <- function(path) {
-  if (!file.exists(path)) {
-    log_warn("Fuente VG/discapacidad ausente: {path}")
-    return(empty_canonical())
-  }
-  read_csv(path, show_col_types = FALSE) %>%
-    transmute(
-      fuente_tipo = "pdf_vg_discapacidad",
-      fuente_archivo = fuente_archivo,
-      fuente_url = NA_character_,
-      identificador_fuente = as.character(pagina),
-      pagina = as.integer(pagina),
-      categoria_principal = categoria_principal,
-      subcategoria = subcategoria,
-      area = area,
-      isla = NA_character_,
-      municipio = NA_character_,
-      codigo_postal = NA_character_,
-      entidad = entidad,
-      cif = NA_character_,
-      descripcion = descripcion,
-      direccion = direccion,
-      telefono_raw = telefono_raw,
-      email_raw = email_raw,
-      web = web,
-      horario = horario,
-      plazas_raw = NA_character_,
-      recurso_igualdad = recurso_igualdad,
-      ambito = NA_character_,
-      vigente = NA
-    )
-}
-
 normalize_isla_text <- function(x) {
   cleaned <- str_to_upper(stringi::stri_trans_general(x %||% NA_character_, "Latin-ASCII"))
   cleaned <- str_replace_all(cleaned, "\\s+", " ") %>% str_trim()
@@ -296,8 +230,6 @@ main <- function() {
   ensure_dir(output_dir)
 
   sources <- list(
-    residencias = load_residencias(file.path(extraction_dir, "residencias_raw.csv")),
-    vg_discapacidad = load_vg_discapacidad(file.path(extraction_dir, "vg_discapacidad_raw.csv")),
     asociaciones = load_asociaciones(file.path(extraction_dir, "asociaciones_registro_filtrado.csv"))
   )
   source_counts <- vapply(sources, nrow, integer(1))

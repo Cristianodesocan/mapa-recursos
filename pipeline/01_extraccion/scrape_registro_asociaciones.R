@@ -19,7 +19,7 @@ script_path <- normalizePath(sub("^--file=", "",
   commandArgs(trailingOnly = FALSE)[startsWith(commandArgs(trailingOnly = FALSE), "--file=")][[1]]
 ), winslash = "/")
 script_dir <- dirname(script_path)
-project_root <- normalizePath(file.path(script_dir, "..", "..", ".."))
+project_root <- normalizePath(file.path(script_dir, "..", ".."))
 source(file.path(project_root, "R", "utils_scraper.R"))
 
 parse_cli <- function(args) {
