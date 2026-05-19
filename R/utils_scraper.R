@@ -2,7 +2,6 @@ suppressPackageStartupMessages({
   library(httr2)
   library(jsonlite)
   library(yaml)
-  library(fs)
   library(dplyr)
   library(stringr)
   library(tibble)
@@ -26,7 +25,9 @@ load_scraper_config <- function(config_path) {
 
 resolve_path <- function(root, path) {
   if (is.null(path) || !nzchar(path)) return(NULL)
-  if (fs::is_absolute_path(path)) return(path)
+  ## Detectar path absoluto sin depender del paquete fs
+  ## Cubre: /ruta (Unix), C:\ruta o C:/ruta (Windows), //UNC
+  if (grepl("^(/|[A-Za-z]:[/\\\\]|//)", path)) return(path)
   file.path(root, path)
 }
 
