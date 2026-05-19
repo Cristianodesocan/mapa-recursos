@@ -34,7 +34,7 @@ jobs:
       MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
       MAPA_RECURSOS_UA: "MapaRecursosObservatorio/2.0 (investigacion@odesocan.org)"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Instalar dependencias del sistema (geo + pdf)
         run: |
@@ -69,7 +69,7 @@ jobs:
             any::fs
 
       - name: Restaurar cache de geocoding
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: cache/
           key: geocoding-cache-main
@@ -100,7 +100,7 @@ jobs:
 
       - name: Guardar logs y salidas como artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pipeline-output-${{ github.run_id }}
           path: |

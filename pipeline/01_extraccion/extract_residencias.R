@@ -206,11 +206,20 @@ main <- function() {
   output_dir <- file.path(root, "salidas", "01_extraccion")
   ensure_dir(output_dir)
 
-  pdf_path <- file.path(root, "fuentes", "TF-2a_GUIA_DE_RECURSOS-Centros de Atención Residencial (1).pdf")
+  pdf_path <- file.path(root, "fuentes", "TF-2a_GUIA_DE_RECURSOS-Centros de Atención Residencial (1).pdf")
   output_path <- file.path(output_dir, "residencias_raw.csv")
 
   if (!file.exists(pdf_path)) {
-    log_abort("No existe el PDF de residencias: {pdf_path}")
+    candidates <- list.files(
+      file.path(root, "fuentes"),
+      pattern = "^TF-2a_GUIA_DE_RECURSOS-Centros.*Residencial.*\\.pdf$",
+      full.names = TRUE
+    )
+    if (length(candidates) >= 1) {
+      pdf_path <- candidates[[1]]
+    } else {
+      log_abort("No existe el PDF de residencias: {pdf_path}")
+    }
   }
 
   data <- parse_residencias_pdf(pdf_path)
