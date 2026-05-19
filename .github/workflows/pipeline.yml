@@ -25,7 +25,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -66,18 +66,21 @@ jobs:
             any::purrr
             any::yaml
             any::stringi
+            any::fs
 
       - name: Restaurar cache de geocoding
         uses: actions/cache@v4
         with:
           path: cache/
-          key: geocoding-cache-${{ github.run_id }}
+          key: geocoding-cache-main
           restore-keys: |
             geocoding-cache-
+          save-always: true
 
       - name: Ejecutar pipeline
         run: |
           ARGS="--from ${{ github.event.inputs.from_stage || 'extraccion' }} --to ${{ github.event.inputs.to_stage || 'supabase' }}"
+          ARGS="$ARGS --max-failures 50"
           if [ "${{ github.event.inputs.skip_supabase }}" = "true" ]; then
             ARGS="$ARGS --skip-supabase"
           fi
