@@ -31,8 +31,6 @@ run() {
 }
 
 run "1_scraper"      Rscript pipeline/01_extraccion/scrape_registro_asociaciones.R
-run "1_residencias"  Rscript pipeline/01_extraccion/extract_residencias.R      --root "$(pwd)"
-run "1_vg_disc"      Rscript pipeline/01_extraccion/extract_vg_discapacidad.R  --root "$(pwd)"
 run "2_transform"    Rscript pipeline/02_transformacion/transform_recursos.R   --root "$(pwd)"
 run "3_geocode"      Rscript pipeline/03_geocodificacion/geocode_recursos.R    --root "$(pwd)" --geocoder cascade
 run "4_analisis"     Rscript pipeline/04_analisis/qa_recursos.R                --root "$(pwd)"

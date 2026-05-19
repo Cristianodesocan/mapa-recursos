@@ -84,8 +84,7 @@ install_missing_packages <- function(packages) {
 validate_outputs <- function(stage, root) {
   expected <- list(
     extraccion = c(
-      file.path(root, "salidas", "01_extraccion", "residencias_raw.csv"),
-      file.path(root, "salidas", "01_extraccion", "vg_discapacidad_raw.csv")
+      file.path(root, "salidas", "01_extraccion", "asociaciones_registro_filtrado.csv")
     ),
     transformacion = c(
       file.path(root, "salidas", "02_transformacion", "recursos_normalizados.csv")
@@ -139,14 +138,6 @@ main <- function() {
   args <- parse_cli_args()
   root <- normalizePath(dirname(dirname(script_path())), winslash = "/", mustWork = TRUE)
 
-  required_pdfs <- c(
-    file.path(root, "fuentes", "TF-2a_GUIA_DE_RECURSOS-Centros de Atención Residencial (1).pdf"),
-    file.path(root, "fuentes", "RECURSOS VG Y DISCAPACIDAD EN CANARIAS -GUIA-ENTRELANZANDO-REDES-.pdf")
-  )
-  for (pdf in required_pdfs) {
-    if (!file.exists(pdf)) cli::cli_abort(glue("Falta el PDF requerido: {pdf}"))
-  }
-
   for (sub in c("01_extraccion", "02_transformacion", "03_geocodificacion", "04_analisis", "05_supabase")) {
     ensure_dir(file.path(root, "salidas", sub))
   }
@@ -169,11 +160,8 @@ main <- function() {
   }
   stage_scripts <- list(
     extraccion = list(
-      list(path = file.path(root, "pipeline", "01_extraccion", "extract_residencias.R")),
-      list(path = file.path(root, "pipeline", "01_extraccion", "extract_vg_discapacidad.R")),
       list(
         path = file.path(root, "pipeline", "01_extraccion", "scrape_registro_asociaciones.R"),
-        optional = TRUE,
         skip_when = isTRUE(args$`skip-scraper`),
         pass_root = FALSE,
         cwd = root,
